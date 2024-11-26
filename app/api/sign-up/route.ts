@@ -9,5 +9,6 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.error();
   }
 
-  return NextResponse.redirect("http://localhost:3000/thank-you");
+  const newURL = new URL("/thank-you", req.url);
+  return NextResponse.redirect(newURL);
 };

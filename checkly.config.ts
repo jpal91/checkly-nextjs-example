@@ -21,7 +21,7 @@ export default defineConfig({
       use: {
         baseURL:
           process.env.ENVIRONMENT_URL! ||
-          "https://checkly-nextjs-example.vercel.com",
+          "https://checkly-nextjs-example.vercel.app",
       },
     },
     browserChecks: {
