@@ -19,3 +19,9 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@layer utilities {
+  .valid-input {
+    @apply has-[:focus]:has-[:invalid]:outline-error has-[:focus]:outline-success;
+  }
+}
