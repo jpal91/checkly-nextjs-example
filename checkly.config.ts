@@ -1,5 +1,15 @@
 import { defineConfig } from "checkly";
-import { Frequency } from "checkly/constructs";
+import {
+  Frequency,
+  SmsAlertChannel,
+  EmailAlertChannel,
+} from "checkly/constructs";
+
+const sendDefaults = {
+  sendFailure: true,
+  sendRecovery: true,
+  sendDegraded: false,
+};
 
 // See https://www.checklyhq.com/docs/cli/constructs-reference/#project for further reference
 export default defineConfig({
@@ -29,6 +39,17 @@ export default defineConfig({
       // Change to match you project structure
       // Ideally you will want to move all checks/tests to one directory for simpler CI deployment
       testMatch: "**/__checks__/**/*.spec.ts",
+      // See https://www.checklyhq.com/docs/alerting-and-retries/alert-channels/ for all alert channel types
+      alertChannels: [
+        new EmailAlertChannel("email-alert-1", {
+          address: process.env.CHECKLY_ALERT_EMAIL!,
+          ...sendDefaults,
+        }),
+        // new SmsAlertChannel("sms-alert-1", {
+        //   phoneNumber: process.env.CHECKLY_ALERT_PHONE_NUMBER!,
+        //   ...sendDefaults,
+        // }),
+      ],
     },
   },
   cli: {
