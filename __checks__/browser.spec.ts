@@ -1,5 +1,15 @@
 import { test, expect } from "@playwright/test";
 
+// Configure the Playwright Test timeout to 210 seconds,
+// ensuring that longer tests conclude before Checkly's browser check timeout of 240 seconds.
+// The default Playwright Test timeout is set at 30 seconds.
+// For additional information on timeouts, visit: https://checklyhq.com/docs/browser-checks/timeouts/
+test.setTimeout(210000);
+
+// Set the action timeout to 10 seconds to quickly identify failing actions.
+// By default Playwright Test has no timeout for actions (e.g. clicking an element).
+test.use({ actionTimeout: 10000 });
+
 const inputFields = ["First Name", "Last Name", "Email"];
 
 test("has title", async ({ page }) => {
