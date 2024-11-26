@@ -43,7 +43,10 @@ jobs:
         run: pnpm install
       - name: Run checks # run the checks passing in the ENVIRONMENT_URL and recording a test session.
         id: run-checks
-        run: pnpm exec checkly test -e ENVIRONMENT_URL=${{ env.ENVIRONMENT_URL }} --reporter=github --record
+        run: |
+          CHECKLY_API_KEY=${{ env.CHECKLY_API_KEY }}
+          CHECKLY_ACCOUNT_ID=${{ env.CHECKLY_ACCOUNT_ID }}
+          pnpm exec checkly test -e ENVIRONMENT_URL=${{ env.ENVIRONMENT_URL }} --reporter=github --record
       - name: Create summary # export the markdown report to the job summary.
         id: create-summary
         run: cat checkly-github-report.md > $GITHUB_STEP_SUMMARY
