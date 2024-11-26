@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 export const POST = async (req: NextRequest) => {
   const formData = await req.formData();
 
-  const name = formData.get("firstName");
+  const name = formData.get("email");
 
-  if (name === "FAIL") {
+  if (name === "fail@gmail.com") {
     return NextResponse.error();
   }
 

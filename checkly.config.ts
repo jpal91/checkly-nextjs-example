@@ -19,7 +19,9 @@ export default defineConfig({
     // See https://www.checklyhq.com/docs/browser-checks/playwright-test/#global-configuration for available options
     playwrightConfig: {
       use: {
-        baseURL: "https://checkly-nextjs-example.vercel.com",
+        baseURL:
+          process.env.ENVIRONMENT_URL! ||
+          "https://checkly-nextjs-example.vercel.com",
       },
     },
     browserChecks: {
