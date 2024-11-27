@@ -8,12 +8,8 @@ test.setTimeout(210000);
 
 // Set the action timeout to 10 seconds to quickly identify failing actions.
 // By default Playwright Test has no timeout for actions (e.g. clicking an element).
-// Also add in Vercel Bypass Token, see: https://www.checklyhq.com/docs/cicd/vercel-deployment-protection/
 test.use({
   actionTimeout: 10000,
-  extraHTTPHeaders: {
-    "x-vercel-protection-bypass": process.env.VERCEL_BYPASS_TOKEN!,
-  },
 });
 
 const inputFields = ["First Name", "Last Name", "Email"];
