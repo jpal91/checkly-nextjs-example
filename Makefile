@@ -14,13 +14,12 @@ endif
 ### INIT ###
 ENV_VARS := CHECKLY_ACCOUNT_ID CHECKLY_API_KEY
 OPT_ENV_VARS := CHECKLY_ALERT_EMAIL CHECKLY_ALERT_PHONE_NUMBER ENVIRONMENT_URL VERCEL_TOKEN
-# NEEDED_ENV_VARS := $(foreach e,$(ENV_VARS),$(shell grep -s $(e) .env.local && echo "" || echo $(e)))
 NEEDED_ENV_VARS := $(filter-out $(shell grep -soE '^([A-Z_]+)' .env.local | sed -E s/=.*//g),$(ENV_VARS) $(OPT_ENV_VARS))
 GIT_REMOTE := $(shell git remote get-url origin)
 
 # Ask user to input required env variables
 create-env.pre:
-	@echo "---Creating env variables---\n"
+	@echo "\n---Creating env variables---\n"
 	[ -f .env.local ] || cp .env.example .env.local
 create-env: create-env.pre $(addsuffix .env, $(NEEDED_ENV_VARS)) $(addsuffix .env.opt, $(OPT_ENV_VARS))
 	
@@ -37,37 +36,41 @@ create-env: create-env.pre $(addsuffix .env, $(NEEDED_ENV_VARS)) $(addsuffix .en
 # Remove default git remote
 rm-git-remote:
 ifeq ($(GIT_REMOTE),https://github.com/jpal91/checkly-nextjs-example.git)
-	@echo "---Removing git remote---\n";
+	@echo "\n---Removing git remote---\n";
 	# git remote remove origin
 endif
 
 # Install dependencies
 install-deps:
-	@echo Installing Packages
+	@echo "\n---Installing dependencies---\n"
 	$(pm_install)
-	@echo Installing Vercel CLI
+	@echo "\n---Installing Vercel CLI---\n"
 	$(call pm_install,-g vercel)
 
 vercel-login:
-	@echo "---Logging into Vercel---\n"
+	@echo "\n---Logging into Vercel---\n"
 	vercel whoami 2>/dev/null || vercel login
 	vercel link
 
 checkly-login:
-	@echo "---Logging in to Checkly---\n"
+	@echo "\n---Logging in to Checkly---\n"
 	$(call pm_exec,checkly whoami) 2>/dev/null || $(call pm_exec,checkly login)
 
+# Checks for any set env secrets in the .env.local and syncs them with Checkly
 sync-secrets:
-	@echo "---Syncing Local Secrets with Checkly---\n"
+	@echo "\n---Syncing Local Secrets with Checkly---\n"
 	@for e in $(filter-out CHECKLY_API_KEY% CHECKLY_ACCOUNT_ID%,$(shell cat .env.local)); do \
-		input="$$(echo $$e | sed 's/=$$/ null/g' | sed 's/=/ /g')"; \
-		$(call pm_exec,checkly env add $$input) 2>/dev/null || $(call pm_exec,checkly env update $$input); \
+		if [ -n $$(echo $$e | sed -E 's/=(.*)/\1/g') ]; then \
+			input="$$(echo $$e | sed 's/=/ /g')"; \
+			$(call pm_exec,checkly env add $$input) 2>/dev/null || $(call pm_exec,checkly env update $$input); \
+		fi; \
 	done;
 
 
 init: create-env rm-git-remote install-deps checkly-login sync-secrets vercel-login
-	@echo "Remember to - "
+	@echo "\nRemember to - "
 	@echo " - Add env secrets to GitHub/GitLab (if applicable)"
+	@echo " - Add env secrets to this repo in the .env.local file (can be done with 'make create-env')"
 	@echo " - Add new remote repo url"
 ######
 
