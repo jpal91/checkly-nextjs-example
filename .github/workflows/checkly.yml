@@ -2,6 +2,11 @@
 name: "checkly"
 on: [deployment_status]
 
+# NOTES:
+# This setup assumes usage of the Vercel/GitHub integration which will automatically create
+# deployments on pushes to remote branches. To do this, navigate to your Vercel Dashboard at https://vercel.com
+# and click "Add New" to follow the steps of linking your GitHub repo with Vercel.
+#
 # Set the necessary credentials and export variables we can use to instrument our test run. Use the ENVIRONMENT_URL
 # to run your checks against staging, preview or production.
 env:

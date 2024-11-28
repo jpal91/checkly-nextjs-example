@@ -45,5 +45,10 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 
+# terraform
+.terraform*
+
+# dev
 NOTES.md
 test-script
+

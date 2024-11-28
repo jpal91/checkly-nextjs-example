@@ -80,29 +80,3 @@ test("form submits and redirects", async ({ page }) => {
   const heading = page.getByRole("heading", { name: "Thank you" });
   await expect(heading).toBeVisible();
 });
-
-/**
- * Same as above but fails on purpose.
- *
- * When 'fail@gmail.com' is sent with the form data the api responds back with
- * a newtwork error instead of redirecting to the 'thank-you' page.
- *
- * This is used for demonstrative purposes to show what happens when a
- * test fails on Checkly, specifically to get an alert.
- * */
-// test("fails every time", async ({ page }) => {
-//   await page.goto("/");
-//
-//   const fieldsWithInputs = inputFields.map((f, i) =>
-//     i === 2 ? [f, "fail@gmail.com"] : [f, f],
-//   );
-//
-//   for (const [field, text] of fieldsWithInputs) {
-//     const input = page.getByLabel(field);
-//     await input.fill(text);
-//   }
-//
-//   await page.getByRole("button", { name: "Submit" }).click();
-//   // Won't actually redirect
-//   await expect(page).toHaveURL("/thank-you");
-// });
