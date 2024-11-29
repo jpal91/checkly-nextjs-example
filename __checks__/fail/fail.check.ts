@@ -3,7 +3,7 @@ import {
   Frequency,
   RetryStrategyBuilder,
   EmailAlertChannel,
-  // SmsAlertChannel
+  SmsAlertChannel,
 } from "checkly/constructs";
 
 const sendDefaults = {
@@ -44,9 +44,9 @@ new BrowserCheck("fail-spec-ts", {
       ...sendDefaults,
     }),
     // Uncomment to try out SMS as well
-    // new SmsAlertChannel("sms-alert-1", {
-    //   phoneNumber: process.env.CHECKLY_ALERT_PHONE_NUMBER!,
-    //   ...sendDefaults,
-    // }),
+    new SmsAlertChannel("sms-alert-1", {
+      phoneNumber: process.env.CHECKLY_ALERT_PHONE_NUMBER!,
+      ...sendDefaults,
+    }),
   ],
 });

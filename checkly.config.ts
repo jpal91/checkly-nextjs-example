@@ -28,7 +28,7 @@ export default defineConfig({
       },
     },
     browserChecks: {
-      frequency: Frequency.EVERY_10M,
+      frequency: Frequency.EVERY_30M,
       // Change to match you project structure
       // Ideally you will want to move all checks/tests to one directory for simpler CI deployment
       testMatch: "**/__checks__/**/*.spec.ts",

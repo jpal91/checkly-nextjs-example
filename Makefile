@@ -74,7 +74,7 @@ sync-secrets:
 	done;
 
 
-init: create-env rm-git-remote install-deps checkly-login sync-secrets vercel-login
+init: rm-git-remote install-deps checkly-login vercel-login
 	@echo "\nRemember to - "
 	@echo " - Add env secrets to GitHub/GitLab (if applicable)"
 	@echo " - Add env secrets to this repo in the .env.local file (can be done with 'make create-env')"
@@ -82,16 +82,13 @@ init: create-env rm-git-remote install-deps checkly-login sync-secrets vercel-lo
 ######
 
 ### VERCEL HELPERS ###
-vercel-build-%:
-ifeq ($*,prod)
+vercel-build-prod:
 	@echo "\n---Building Production---\n"
 	vercel build --prod
-else ifeq ($*,prev)
+
+vercel-build-prev:
 	@echo "\n---Building Preview---\n"
 	vercel build
-else
-	exit 1
-endif
 
 vercel-deploy-prev:
 	@echo "\n---Deploying to Vercel---\n"
@@ -102,22 +99,15 @@ vercel-deploy-prev:
 .EXPORT_ALL_VARIABLES:
 -include .env.local
 
+# envs_wo_env_url := $(filter-out ENVIRONMENT_URL=* %=, $(shell cat .env.local)) $(1)
+
 # Runs through the entire process of build preview, deployment, and running Checkly tests against the preview 
 # If the tests pass, the build is then promoted to production
 vercel-deploy: vercel-build-prev vercel-deploy-prev
 	@echo "\n---Running Checkly Tests---\n"
-	@deployment_url=$(shell cat deployment-url.txt); \
-	# Gets all env variables that are set and updates ENVIRONMENT_URL to the preview url given by Vercel 
-	envs="$(shell cat .env.local | grep -E '^[A-Z_]+=.+$$' | sed -E "s/(ENVIRONMENT_URL=).*/\1$$deployment_url/" | sed -E 's/(\S+)/-e \1/g')"; \
-	if ! $$(echo "$$envs" | grep -qE 'ENVIRONMENT_URL' ); then \
-		envs="$$envs -e ENVIRONMENT_URL=$$deployment_url"; \
-	else \
-		envs=$(shell echo $$envs | sed -E "s/(ENVIRONMENT_URL=).*/\1$$deployment_url/"); \
-	fi; \
-	# Runs checkly tests and exits on error
-	$(call pm_exec,checkly test -r github --record $$envs) || exit 1 
+	$(call pm_exec,checkly test -r github --record -e ENVIRONMENT_URL=$(shell cat deployment-url.txt)) || exit 1
 	vercel promote
-	# Deploy new checks
+	@echo "\n---Deploying to production---\n"
 	$(call pm_exec,checkly deploy --force)
 	
 trigger-fail:
@@ -127,7 +117,7 @@ trigger-fail:
 	$(call pm_exec,checkly destroy --force)
 
 test:
-	$(call pm_exec,checkly test -r github --record --env-file=".env.local")
+	$(call pm_exec,checkly test -r github --record)
 
 clean:
 	rm -rf .next playwright-report node_modules test-results deployment-url.txt
