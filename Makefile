@@ -109,6 +109,7 @@ vercel-deploy: vercel-build-prev vercel-deploy-prev
 	vercel promote
 	@echo "\n---Deploying to production---\n"
 	$(call pm_exec,checkly deploy --force)
+	@echo "\nDONE!!\n"
 	
 trigger-fail:
 	$(call pm_exec,checkly deploy --force);

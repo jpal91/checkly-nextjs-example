@@ -340,8 +340,6 @@ on: [deployment_status]
 
 This action is making the assumption that your deployment is handled automatically by the [Vercel/GitHub Deployment](https://vercel.com/docs/deployments/git/vercel-for-github#configuring-for-github) integration, which is the recommended way to deploy a Vercel project.
 
-\
-
 > **Set Up Vercel Integration**
 >
 > Navigate to your [Vercel](https://vercel.com) account dashboard. You should see a button `Add New` near the top right.
@@ -351,8 +349,6 @@ This action is making the assumption that your deployment is handled automatical
 > Follow the instructions given to link your GitHub account with Vercel and select your repo from the given list.
 >
 > With this integration, every time you commit, Vercel will deploy a new build. By default, production builds on `main`, and preview builds on other branches.
-
-\
 
 When Vercel deploys, it sends a `deployment_status` event which will trigger this workflow. This allows us to check the deployment against our tests, and to deploy our checks if everything passes and if we're in production (ie pushing to `main`):
 
