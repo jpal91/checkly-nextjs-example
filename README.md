@@ -1,5 +1,7 @@
 # Checkly Next.js Example
 
+![](https://api.checklyhq.com/v1/badges/checks/64e27fc6-edbc-4799-921e-fd39b1153841?style=flat&theme=dark)
+
 ![Picture of repo web page](./assets/webpage-pic.jpg)
 
 ## Table of Contents
