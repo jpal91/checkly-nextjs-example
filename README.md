@@ -50,7 +50,7 @@ If you don't have `make` installed, navigate down to [Manual Setup](#manual-setu
 >
 > Run `make help` to see all commands
 
-This command will walk you through installing all necessary project dependencies as well as setting up environment variables (if you want, see [Environment Variables](#environment-variables) for further explanation).
+This command will walk you through installing all necessary project dependencies.
 
 Once everything is installed, run:
 
@@ -104,7 +104,7 @@ This repo comes with a [sample .env file](.env.sample) which shows the environme
 A few notes on the variables -
 
 1. **CHECKLY_API_KEY** and **CHECKLY_ACCOUNT_ID** - When logged in to Checkly via the command line, these will be included in the environment for you, so you can safely ignore setting them. However, if you want to try out the [Terraform](#terraform) or [GitHub](#github) implementations in this project, you will have to set them, as the building/testing will occur outside of your local environment.
-2. **CHECKLY*ALERT***\* - Any variables with `ALERT` refer to sensitive information that will be included in the environment to reference where to send alerts to (ie email addresses or phone numbers). See [Alerts](#alerts) for more details.
+2. **CHECKLY_ALERT\_\***\* - Any variables with `ALERT` refer to sensitive information that will be included in the environment to reference where to send alerts to (ie email addresses or phone numbers). See [Alerts](#alerts) for more details.
 3. **ENVIRONMENT_URL** - Used by Checkly as the target for testing when running `npx checkly test` from the command line. When using `make vercel-build`, the `ENVIRONMENT_URL` will be automatically updated with the latest preview build's url from `vercel`. If using different means of interacting with this package, you'll want to explicitly state this or it will point to/test for the project's current url [https://checkly-nextjs-example.vercel.app](https://checkly-nextjs-example.vercel.app).
 4. **VERCEL_BYPASS_TOKEN** - By default, Vercel will require a user visiting a page to be authenticated with Vercel. This will prevent CI tools (ie [GitHub Actions](#github-actions)) from being able to run tests on the site. **You can turn this functionality off in the project settings via the Vercel Dashboard**. Learn more about bypass protection [on the Vercel website](https://vercel.com/docs/security/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation).
 
@@ -114,17 +114,37 @@ A few notes on the variables -
 
 ## Checks
 
-The Checkly tests for this project reside in the [`__checks__`](./__checks__) directory of the repo. The configuration file can be found at the root, [`checkly.config.ts`](./checkly.config.ts).
+The Checkly `playwright` tests and checks for this project reside in the [`__checks__`](./__checks__) directory of the repo. The configuration file can be found at the root, [`checkly.config.ts`](./checkly.config.ts).
+
+Housing the files in `__checks__` is common practice, however, you can specify any place to put your checks by specifying a `glob` pattern in the `checkly.config.ts` like so:
+
+```ts
+// checkly.config.ts
+export default defineConfig({
+    ...
+    tags: ["website", "api"],
+    checkMatch: "**/__checks__/**/*.check.ts", // checkly cli looks for any checks here (could be browser, api, heartbeat, etc.)
+    ignoreDirectoriesMatch: [
+    ...
+    browserChecks: {
+      frequency: Frequency.EVERY_30M,
+      testMatch: "**/__checks__/**/*.spec.ts", // also here for browser playwright tests
+    },
+    ...
+})
+```
+
+Any new checks added to this directory will be automatically included when running Checkly tests/deploys.
 
 ### Configuration
 
 In the configuration file you'll find several default values that will apply to checks unless otherwise specified (see [Browser](#browser) for details).
 
-You can also add specific `playwright` configuration to the configuration as well. Not all options are supported though, see the page on [global configuration](https://www.checklyhq.com/docs/browser-checks/playwright-test/#global-configuration) for further details.
+You can also add specific `playwright` configurations to the options as well. Not all options are supported though, see the page on [global configuration](https://www.checklyhq.com/docs/browser-checks/playwright-test/#global-configuration) for further details.
 
 ```ts
 // checkly.config.ts
-{
+export default defineConfig({
 	...
     playwrightConfig: {
       use: {
@@ -136,39 +156,41 @@ You can also add specific `playwright` configuration to the configuration as wel
     browserChecks: {
       frequency: Frequency.EVERY_30M,
       testMatch: "**/__checks__/**/*.spec.ts",
- },
+    }
+    ...
+ })
 ```
 
-For more details on the options you can pass in to the config visit the [Project Construct](https://www.checklyhq.com/docs/cli/constructs-reference/#project) page.
+For more details on the options you can pass in to the `config` visit the [Project Construct](https://www.checklyhq.com/docs/cli/constructs-reference/#project) page.
 
-Having this file is **required** for the cli to run properly, pick up tests within the repo, and deploy them to Checkly.
+Having this file is **required** for the CLI to run properly, pick up tests within the repo, and deploy them to Checkly.
 
 ### Browser
 
-The main checks for this project is in the [`browser.spec.ts`](./__checks__/browser.spec.ts) file with the check's configuration at [`browser.check.ts`](./__checks__/browser.check.ts).
+The main checks for this project are in the [`browser.spec.ts`](./__checks__/browser.spec.ts) file with the check's configuration at [`browser.check.ts`](./__checks__/browser.check.ts).
 
-The tests in `spec.ts` are relatively simple, just a quick demonstration of a `playwright` test that would be picked up by the Checkly CLI.
+The tests in `spec.ts` are relatively simple, just a quick demonstration of some `playwright` tests that would be picked up by the Checkly CLI.
 
-The configuration in `check.ts` demonstrates how you can override specific variables named in the `checkly.config.ts` file. For example, the main config has browser checks running every 30 minutes, while the `browser.check` defines the frequency at every 10 minutes. This will be the final value as it is more targeted.
+The configuration in `check.ts` demonstrates how you can override specific variables named in the `checkly.config.ts` file. For example, the main `config` has browser checks running every 30 minutes, while the `browser.check` defines the frequency at every 10 minutes. This will be the final value as it is more targeted.
 
 ```ts
 // __checks__/browser.check.ts
-{
+new BrowserCheck("browser-spec-ts", {
 	...
 	tags: ["website", "api"],
 	frequency: Frequency.EVERY_10M,
 	environmentVariables: [],
-	...
-}
+  ...
+})
 ```
 
 > [!NOTE]
 >
-> `check.ts` files are _not required_, but recommended. If not included for a specific test file, the defaults from `checkly.config.ts` will be used
+> `check.ts` files are _not required_ for browser checks, but recommended. If not included for a specific test file, the defaults from `checkly.config.ts` will be used
 
 ## Alerts
 
-Checkly has [several methods](https://www.checklyhq.com/docs/alerting-and-retries/alert-channels/) of receiving alerts when something goes wrong. These can also be configured via JavaScript/TypeScript directly in your configuration. These alerts can also be defined on a global or per check basis as well.
+Checkly has [several methods](https://www.checklyhq.com/docs/alerting-and-retries/alert-channels/) of sending alerts when something goes wrong. These can also be configured via JavaScript/TypeScript directly in your configuration. These alerts can also be defined on a global or per check basis as well.
 
 Navigating to [`fail.check.ts`](./__checks__/fail/fail.check.ts), you can see an example of how alerts can be configured on a specific check:
 
@@ -180,18 +202,13 @@ const sendDefaults = {
   sendDegraded: false,
 };
 ...
-{
+new BrowserCheck("fail-spec-ts", {
   ...
   code: {
     entrypoint: "./fail.spec.ts",
   },
   retryStrategy: RetryStrategyBuilder.noRetries(),
   alertChannels: [
-    new EmailAlertChannel("email-alert-1", {
-      address: process.env.CHECKLY_ALERT_EMAIL!,
-      ...sendDefaults,
-    }),
-    // Uncomment to try out SMS as well
     new SmsAlertChannel("sms-alert-1", {
       phoneNumber: process.env.CHECKLY_ALERT_PHONE_NUMBER!,
       ...sendDefaults,
@@ -200,9 +217,7 @@ const sendDefaults = {
 });
 ```
 
-As `sendFailure` is set to `true` when this test fails (and it will), both an email and sms alert will be sent to the configured address/phone number respectively.
-
-Since the alerts were set within this specific check file, no other tests are configured to receive alerts on failures. However, you can configure a global alerts in `checkly.config.ts` via it's `alertChannels`, which will become the default for _all_ checks.
+Now because the global `checkly.config.ts` has `alertChannels` set for email and the `fail` check has channels set for SMS, which will a user receive? The answer is **JUST** a text message as that was the only one specified in the check. If you want to add emails on, you need to add the email construct to the check as well. However, if nothing was specified in the `fail.check.ts` for `alertChannels`, you would receive an email as that is the stated default from the `config`.
 
 > [!NOTE]
 >
@@ -227,7 +242,7 @@ If you're curious about what would happen if a test failed, you can deploy this 
 First a small change in `checkly.config.ts`:
 
 ```ts
-{
+export default defineConfig({
 	...
 	checkMatch: "**/__checks__/**/*.check.ts",
 	ignoreDirectoriesMatch: [
@@ -235,10 +250,10 @@ First a small change in `checkly.config.ts`:
 		// "**/__checks__/fail/*,
 	],
 	...
-}
+})
 ```
 
-This will make sure the config picks up this directory when deploying. Then run:
+This will make sure the `config` picks up this directory when deploying. Then run:
 
 ```bash
 make trigger-fail
@@ -252,7 +267,7 @@ sleep 10
 pnpm exec checkly destroy --force
 ```
 
-While `sleep` is running, you should notice that familiar buzz in your pocket. Be sure to check your email as well!
+While `sleep` is running, you should notice that familiar buzz in your pocket. Try out some of the other options as well!
 
 Finally, **remember to undo the comments!**
 
@@ -300,7 +315,7 @@ pnpm exec checkly deploy --force
 
 1. A preview build is initiated via `vercel build`.
 2. The preview is deployed and the output value is the new preview's url that we will use as the `ENVIRONMENT_URL` to test with Checkly.
-3. We initiate the check, adding environment variables from `.env.local`
+3. We initiate the check, adding the new `ENVIRONMENT_URL` as an argument.
 4. If the test fails, we stop immediately. Since this is just a preview build, we don't have to worry about rolling anything back.
 5. If successful, we promote the build to production, and deploy our checks to Checkly.
 
@@ -325,15 +340,21 @@ on: [deployment_status]
 
 This action is making the assumption that your deployment is handled automatically by the [Vercel/GitHub Deployment](https://vercel.com/docs/deployments/git/vercel-for-github#configuring-for-github) integration, which is the recommended way to deploy a Vercel project.
 
+\
+
 > **Set Up Vercel Integration**
 >
 > Navigate to your [Vercel](https://vercel.com) account dashboard. You should see a button `Add New` near the top right.
+>
 > ![Vercel Add New Button](./assets/vercel-add-new.jpg)
+>
 > Follow the instructions given to link your GitHub account with Vercel and select your repo from the given list.
 >
 > With this integration, every time you commit, Vercel will deploy a new build. By default, production builds on `main`, and preview builds on other branches.
 
-When Vercel deploys, it sends a `deployment_status` event which will trigger this workflow. This allows us to check the deployment against our tests and to deploy our checks if everything passes and if we're in production (ie pushing to `main`):
+\
+
+When Vercel deploys, it sends a `deployment_status` event which will trigger this workflow. This allows us to check the deployment against our tests, and to deploy our checks if everything passes and if we're in production (ie pushing to `main`):
 
 ```yml
 - name: Deploy checks # if the test run was successful and we are on Production, deploy the checks
@@ -385,7 +406,7 @@ resource "checkly_check" "browser-check" {
 }
 ```
 
-Defining checks in this way replaces the need for most of the config and check files in your repo. You could actually replace all of the `__checks__` folder by writing the script directly into the `tf` doc. Depending on how your project is set up, this could be beneficial as you could define your checks as a part of your infrastructure along with needed cloud services, web app servers, etc.
+Defining checks in this way replaces the need for most of the `config` and check files in your repo. You could actually replace all of the `__checks__` folder by writing the script directly into the `tf` doc. Depending on how your project is set up, this could be beneficial as you could define your checks as a part of your infrastructure along with needed cloud services, web app servers, etc.
 
 A simple `cli` example of how you could build and deploy all on the command line:
 

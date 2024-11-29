@@ -119,6 +119,9 @@ trigger-fail:
 test:
 	$(call pm_exec,checkly test -r github --record)
 
+deploy:
+	$(call pm_exec,checkly deploy --force)
+
 clean:
 	rm -rf .next playwright-report node_modules test-results deployment-url.txt
 	$(call pm_exec,checkly destroy --force)

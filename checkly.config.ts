@@ -1,5 +1,11 @@
 import { defineConfig } from "checkly";
-import { Frequency } from "checkly/constructs";
+import { Frequency, EmailAlertChannel } from "checkly/constructs";
+
+const sendDefaults = {
+  sendFailure: true,
+  sendRecovery: true,
+  sendDegraded: false,
+};
 
 // See https://www.checklyhq.com/docs/cli/constructs-reference/#project for further reference
 export default defineConfig({
@@ -34,6 +40,12 @@ export default defineConfig({
       testMatch: "**/__checks__/**/*.spec.ts",
       // See https://www.checklyhq.com/docs/alerting-and-retries/alert-channels/ for all alert channel types
     },
+    alertChannels: [
+      new EmailAlertChannel("email-alert-1", {
+        address: process.env.CHECKLY_ALERT_EMAIL!,
+        ...sendDefaults,
+      }),
+    ],
   },
   cli: {
     runLocation: "us-east-1",
